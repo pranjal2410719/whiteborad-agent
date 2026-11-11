@@ -79,9 +79,9 @@ def main():
         srv_thread = threading.Thread(target=run_srv, daemon=True)
         srv_thread.start()
         time.sleep(0.4)
-        print(f"📡 Live canvas server started at: http://localhost:{port}")
+        print(f"Live canvas server started at: http://localhost:{port}")
     else:
-        print(f"📡 Connected to live running server at: http://localhost:{port}")
+        print(f"Connected to live running server at: http://localhost:{port}")
 
     def execute(tool_name: str, args: Dict[str, Any]) -> Dict[str, Any]:
         if server_running:
@@ -100,8 +100,8 @@ def main():
     last_id: Optional[str] = None
 
     print("=" * 64)
-    print("🎨 Whiteboard AI Agent — Interactive Shell with Live Canvas Sync")
-    print(f"👉 OPEN IN BROWSER TO SEE LIVE CANVAS: http://localhost:{port}")
+    print("Whiteboard AI Agent -- Interactive Shell with Live Canvas Sync")
+    print(f"OPEN IN BROWSER TO SEE LIVE CANVAS: http://localhost:{port}")
     print("Type 'show' or 'open' to open the browser automatically.")
     print("Type 'help' for commands, 'demo' for auto-run, or 'quit' to exit.")
     print("=" * 64)
@@ -133,7 +133,7 @@ def main():
         elif cmd == "clear":
             res = execute("clear_canvas", {})
             last_id = None
-            print(f"✓ {res.get('message', 'Cleared')}")
+            print(f"[OK] {res.get('message', 'Cleared')}")
         elif cmd == "demo":
             print("\nRunning automated multi-element layout demo...")
             t = execute("write_text", {"title": "Calculus 101", "text": "Derivative of polynomials"})
@@ -143,7 +143,7 @@ def main():
             execute("circle_element", {"target_id": n.get("id")})
             execute("draw_arrow", {"from_id": f.get("id"), "to_id": n.get("id"), "label": "Key rule"})
             last_id = n.get("id")
-            print(f"✓ Demo complete! Elements rendered live on canvas at http://localhost:{port}")
+            print(f"[OK] Demo complete! Elements rendered live on canvas at http://localhost:{port}")
             print(get_spatial())
         elif cmd == "formula":
             parts = [p.strip() for p in args.split("|")]
@@ -151,8 +151,8 @@ def main():
             f_str = parts[1] if len(parts) > 1 else parts[0]
             res = execute("create_formula", {"title": title, "formula": f_str})
             last_id = res.get("id")
-            print(f"✓ Created formula '{last_id}': {f_str}")
-            print(f"  👉 View live on canvas at: http://localhost:{port}")
+            print(f"[OK] Created formula '{last_id}': {f_str}")
+            print(f"  View live on canvas at: http://localhost:{port}")
         elif cmd == "underline":
             target = last_id
             word = None
@@ -167,7 +167,7 @@ def main():
                 print("Error: No element to underline. Create a formula/note first.")
                 continue
             res = execute("underline_element", {"target_id": target, "target_text": word})
-            print(f"✓ {res.get('message', 'Underlined')}")
+            print(f"[OK] {res.get('message', 'Underlined')}")
         elif cmd == "circle":
             target = last_id
             word = None
@@ -182,21 +182,21 @@ def main():
                 print("Error: No element to circle. Create a formula/note first.")
                 continue
             res = execute("circle_element", {"target_id": target, "target_text": word})
-            print(f"✓ {res.get('message', 'Circled')}")
+            print(f"[OK] {res.get('message', 'Circled')}")
         elif cmd == "move":
             tokens = args.split()
             if len(tokens) < 3:
                 print("Usage: move <element_id> <x> <y>")
                 continue
             res = execute("move_element", {"element_id": tokens[0], "x": float(tokens[1]), "y": float(tokens[2])})
-            print(f"✓ {res.get('message', 'Moved element')}")
+            print(f"[OK] {res.get('message', 'Moved element')}")
         elif cmd == "note":
             parts = [p.strip() for p in args.split("|")]
             title = parts[0] if len(parts) > 1 else "Sticky Note"
             content = parts[1] if len(parts) > 1 else parts[0]
             res = execute("create_sticky_note", {"title": title, "content": content})
             last_id = res.get("id")
-            print(f"✓ {res.get('message', 'Created note')} (id: {last_id})")
+            print(f"[OK] {res.get('message', 'Created note')} (id: {last_id})")
         elif cmd == "mermaid":
             parts = [p.strip() for p in args.split("|")]
             title = parts[0] if len(parts) > 1 else "Flowchart"
@@ -205,8 +205,8 @@ def main():
                 code = "\n".join([s.strip() for s in code.split(";") if s.strip()])
             res = execute("create_mermaid", {"title": title, "code": code})
             last_id = res.get("id")
-            print(f"✓ {res.get('message', 'Created Mermaid diagram')} (id: {last_id})")
-            print(f"  👉 View live on canvas at: http://localhost:{port}")
+            print(f"[OK] {res.get('message', 'Created Mermaid diagram')} (id: {last_id})")
+            print(f"  View live on canvas at: http://localhost:{port}")
         elif cmd == "diagram":
             parts = [p.strip() for p in args.split("|")]
             title = parts[0] if len(parts) > 1 else "Flowchart"
@@ -214,32 +214,32 @@ def main():
             nodes = [{"label": s.strip()} for s in nodes_str.split(",")]
             res = execute("create_diagram", {"title": title, "nodes": nodes})
             last_id = res.get("id")
-            print(f"✓ {res.get('message', 'Created diagram')} (id: {last_id})")
+            print(f"[OK] {res.get('message', 'Created diagram')} (id: {last_id})")
         elif cmd == "graph":
             parts = [p.strip() for p in args.split("|")]
             title = parts[0] if len(parts) > 1 else "Plot"
             eq = parts[1] if len(parts) > 1 else "y = x^2"
             res = execute("create_graph", {"title": title, "equation": eq})
             last_id = res.get("id")
-            print(f"✓ {res.get('message', 'Created graph')} (id: {last_id})")
+            print(f"[OK] {res.get('message', 'Created graph')} (id: {last_id})")
         elif cmd == "hint":
             res = execute("create_hint", {"text": args or "Check your signs!"})
             last_id = res.get("id")
-            print(f"✓ {res.get('message', 'Created hint')} (id: {last_id})")
+            print(f"[OK] {res.get('message', 'Created hint')} (id: {last_id})")
         elif cmd == "text":
             parts = [p.strip() for p in args.split("|")]
             title = parts[0] if len(parts) > 1 else "Text"
             content = parts[1] if len(parts) > 1 else parts[0]
             res = execute("write_text", {"title": title, "text": content})
             last_id = res.get("id")
-            print(f"✓ {res.get('message', 'Created text')} (id: {last_id})")
+            print(f"[OK] {res.get('message', 'Created text')} (id: {last_id})")
         elif cmd == "arrow":
             tokens = args.split()
             if len(tokens) < 2:
                 print("Usage: arrow <from_id> <to_id>")
                 continue
             res = execute("draw_arrow", {"from_id": tokens[0], "to_id": tokens[1]})
-            print(f"✓ {res.get('message', 'Connected arrow')}")
+            print(f"[OK] {res.get('message', 'Connected arrow')}")
         elif cmd == "annotate":
             parts = [p.strip() for p in args.split("|")]
             target = parts[0] if len(parts) > 1 else last_id
@@ -248,11 +248,11 @@ def main():
                 print("Usage: annotate <target_id> | <text>")
                 continue
             res = execute("annotate_element", {"target_id": target, "text": text})
-            print(f"✓ {res.get('message', 'Annotated')}")
+            print(f"[OK] {res.get('message', 'Annotated')}")
         elif cmd == "pan":
             target = args if args else last_id
             res = execute("drag_canvas", {"focus_element_id": target})
-            print(f"✓ {res.get('message', 'Panned')}")
+            print(f"[OK] {res.get('message', 'Panned')}")
         else:
             print(f"Unknown command '{cmd}'. Type 'help' for command list.")
 

@@ -21,7 +21,7 @@ def main():
         "height": 220.0,
     })
     geom_id = geom["id"]
-    print(f"✓ Created {geom['figure_type']} '{geom_id}' with vertices: {list(geom['points'].keys())}")
+    print(f"[OK] Created {geom['figure_type']} '{geom_id}' with vertices: {list(geom['points'].keys())}")
 
     # Step 2: VCoT deduction + Dropping an auxiliary altitude from A to base BC
     print("\n[Step 2] VCoT Reasoning: Drop altitude AH perpendicular to BC...")
@@ -34,7 +34,7 @@ def main():
         "color": "#dc2626",
         "style": "dashed",
     })
-    print(f"✓ Added auxiliary altitude AH (id: {alt['id']}) with right-angle mark at H.")
+    print(f"[OK] Added auxiliary altitude AH (id: {alt['id']}) with right-angle mark at H.")
 
     # Step 3: VCoT deduction + Adding auxiliary median AM from A to midpoint of BC
     print("\n[Step 3] VCoT Reasoning: Construct median AM bisecting segment BC at M...")
@@ -47,7 +47,7 @@ def main():
         "color": "#2563eb",
         "style": "dashed",
     })
-    print(f"✓ Added auxiliary median AM (id: {med['id']}) with congruence tick marks on BM and MC.")
+    print(f"[OK] Added auxiliary median AM (id: {med['id']}) with congruence tick marks on BM and MC.")
 
     # Step 4: Angle marking at vertex A
     print("\n[Step 4] Marking angle BAC with angle arc...")
@@ -58,7 +58,7 @@ def main():
         "arms": ("B", "C"),
         "color": "#7e22ce",
     })
-    print(f"✓ Marked angle arc at vertex A (id: {arc['id']}).")
+    print(f"[OK] Marked angle arc at vertex A (id: {arc['id']}).")
 
     # Step 5: Write mathematical deduction formula below
     print("\n[Step 5] Deriving Area Formula based on visual altitude AH...")
@@ -74,15 +74,15 @@ def main():
         "anchor_id": geom_id,
         "direction": "bottom",
     })
-    print(f"✓ Wrote formula derivation (id: {f['id']}).")
+    print(f"[OK] Wrote formula derivation (id: {f['id']}).")
 
     # Step 6: Underline final result
     agent.execute_tool("underline_element", {"target_id": f["id"], "color": "#dc2626"})
-    print("✓ Underlined formula with pen stroke.")
+    print("[OK] Underlined formula with pen stroke.")
 
     # Step 7: Camera focus
     agent.execute_tool("drag_canvas", {"focus_element_id": geom_id, "zoom": 1.1})
-    print("✓ Panned viewport to center on the geometric construction.")
+    print("[OK] Panned viewport to center on the geometric construction.")
 
     print("\n=== Canvas Spatial Memory Digest ===")
     print(agent.get_spatial_context())

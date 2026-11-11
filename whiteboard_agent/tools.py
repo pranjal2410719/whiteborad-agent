@@ -414,7 +414,7 @@ class WhiteboardToolRegistry:
             id=elem_id,
             type="hint",
             bounds=box,
-            title="💡 Hint",
+            title="Hint",
             content=text,
             style={"color": "#b45309"},
         )

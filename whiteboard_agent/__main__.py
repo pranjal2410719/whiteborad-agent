@@ -15,9 +15,9 @@ def main():
     args = parser.parse_args()
 
     app = create_whiteboard_app()
-    print(f"🎨 Starting Whiteboard AI Agent Server at http://{args.host}:{args.port}")
-    print(f"📡 WebSocket streaming at ws://{args.host}:{args.port}/ws")
-    print(f"📖 API documentation at http://{args.host}:{args.port}/docs")
+    print(f"Starting Whiteboard AI Agent Server at http://{args.host}:{args.port}")
+    print(f"WebSocket streaming at ws://{args.host}:{args.port}/ws")
+    print(f"API documentation at http://{args.host}:{args.port}/docs")
     uvicorn.run(app, host=args.host, port=args.port)
 
 

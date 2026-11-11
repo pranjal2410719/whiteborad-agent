@@ -2,12 +2,12 @@
 
 A dedicated AI Agent and Spatial Memory Engine designed to autonomously operate on digital whiteboards and infinite canvases. Compatible with **any LLM** (OpenAI, Anthropic Claude, Google Gemini, Ollama / local models, LangChain, or MCP).
 
-> 📘 **Looking for the Agent Integration Manual?**
+> **Looking for the Agent Integration Manual?**
 > See [**`AGENT_GUIDE.md`**](file:///home/dev/Desktop/projects/Qrie-Org/tutor/whiteboard_agent/AGENT_GUIDE.md) for complete agent protocols, spatial memory rules, layout blueprints, and multi-turn execution loops.
 
 ---
 
-## 🌟 Core Highlights
+## Core Highlights
 
 1. **Spatial Memory Engine**:
    - Tracks 2D bounding boxes `(x, y, width, height)` of every element on the canvas.
@@ -34,16 +34,16 @@ A dedicated AI Agent and Spatial Memory Engine designed to autonomously operate 
    - Sub-element targeting: Call `circle_element` or `underline_element` on individual node labels or words inside Mermaid diagrams.
 
 5. **Complete Whiteboard Tool Suite**:
-   - ✍️ `write_text`: Text blocks and titles.
-   - 📌 `create_sticky_note`: Sticky notes with themes.
-   - 🧮 `create_formula`: Formulas and equations with sub-word/term targeting.
-   - 📊 `create_mermaid` & `create_diagram`: Mermaid charts and process trees.
-   - 📈 `create_graph`: Function curves ($y = ax^2 + bx + c$), axes, plots.
-   - 💡 `create_hint`: Callout hint cards.
-   - 〰️ `underline_element` & ⭕ `circle_element`: Targeting elements or specific words/terms.
-   - 🔍 `drag_canvas`: Camera viewport pan, zoom, and auto-fit.
-   - 🗂️ `move_element`, `delete_element`, `clear_canvas`.
-   - 🧭 `find_empty_space`, `get_canvas_state`.
+   - `write_text`: Text blocks and titles.
+   - `create_sticky_note`: Sticky notes with themes.
+   - `create_formula`: Formulas and equations with sub-word/term targeting.
+   - `create_mermaid` & `create_diagram`: Mermaid charts and process trees.
+   - `create_graph`: Function curves ($y = ax^2 + bx + c$), axes, plots.
+   - `create_hint`: Callout hint cards.
+   - `underline_element` & `circle_element`: Targeting elements or specific words/terms.
+   - `drag_canvas`: Camera viewport pan, zoom, and auto-fit.
+   - `move_element`, `delete_element`, `clear_canvas`.
+   - `find_empty_space`, `get_canvas_state`.
 
 6. **Universal LLM & Frontend Interoperability**:
    - Exports standard tool schemas:
@@ -55,7 +55,7 @@ A dedicated AI Agent and Spatial Memory Engine designed to autonomously operate 
 
 ---
 
-## 📁 Repository Structure
+## Repository Structure
 
 ```
 whiteboard_agent/
@@ -84,7 +84,7 @@ whiteboard_agent/
 
 ---
 
-## 🚀 Quickstart
+## Quickstart
 
 ### 1. Installation
 
@@ -137,7 +137,7 @@ agent.execute_tool("drag_canvas", {
 
 ---
 
-## 🤖 Providing to Any LLM
+## Providing to Any LLM
 
 ### OpenAI Function Calling
 
@@ -202,7 +202,7 @@ response = client.models.generate_content(
 
 ---
 
-## 🌐 Running the Interactive Web Whiteboard Server
+## Running the Interactive Web Whiteboard Server
 
 Start the local server:
 
@@ -218,7 +218,7 @@ Open `http://localhost:8000` in your browser. You can:
 
 ---
 
-## 🧪 Testing
+## Testing
 
 Run the test suite:
 

@@ -229,7 +229,7 @@ class WhiteboardBridge {
     } else if (el.type === 'annotation') {
       html = `<div class="ink-annotation">${el.content}</div>`;
     } else if (el.type === 'hint') {
-      html = `<div class="ink-text" style="font-size:24px; color:#b45309;">💡 ${el.content}</div>`;
+      html = `<div class="ink-text" style="font-size:24px; color:#b45309;">Note: ${el.content}</div>`;
     } else {
       html = `<div class="ink-text">${el.content}</div>`;
     }
