@@ -39,6 +39,17 @@ class WhiteboardToolRegistry:
     ) -> Dict[str, Any]:
         """Writes a block of text or markdown content on the canvas."""
         if x is None or y is None:
+            # Deduplication check: return existing element if same text is already present
+            for e in self.memory.elements.values():
+                if e.type == "text" and e.content == text:
+                    return {
+                        "success": True,
+                        "id": e.id,
+                        "action": "write_text",
+                        "bounds": e.bounds.to_dict(),
+                        "message": f"Existing text block '{e.id}' reused",
+                        "deduplicated": True,
+                    }
             box = self.memory.find_empty_space(width, height, anchor_id=anchor_id, direction=direction)
         else:
             box = BoundingBox(x=x, y=y, width=width, height=height)
@@ -85,6 +96,17 @@ class WhiteboardToolRegistry:
         bg = color_map.get(color, "#fef08a")
 
         if x is None or y is None:
+            # Deduplication check: return existing element if same note is already present
+            for e in self.memory.elements.values():
+                if e.type == "sticky_note" and e.content == content:
+                    return {
+                        "success": True,
+                        "id": e.id,
+                        "action": "create_sticky_note",
+                        "bounds": e.bounds.to_dict(),
+                        "message": f"Existing sticky note '{e.id}' reused",
+                        "deduplicated": True,
+                    }
             box = self.memory.find_empty_space(width, height, anchor_id=anchor_id, direction=direction)
         else:
             box = BoundingBox(x=x, y=y, width=width, height=height)
@@ -132,6 +154,17 @@ class WhiteboardToolRegistry:
             calc_height = 85.0 + (step_count * 35.0) if step_count > 0 else 85.0
 
         if x is None or y is None:
+            # Deduplication check: return existing element if same formula is already present
+            for e in self.memory.elements.values():
+                if e.type == "formula" and isinstance(e.content, dict) and e.content.get("formula") == formula:
+                    return {
+                        "success": True,
+                        "id": e.id,
+                        "action": "create_formula",
+                        "bounds": e.bounds.to_dict(),
+                        "message": f"Existing formula '{e.id}' reused: {formula}",
+                        "deduplicated": True,
+                    }
             box = self.memory.find_empty_space(calc_width, calc_height, anchor_id=anchor_id, direction=direction)
         else:
             box = BoundingBox(x=x, y=y, width=calc_width, height=calc_height)
@@ -184,6 +217,17 @@ class WhiteboardToolRegistry:
 
         nodes = nodes or []
         if x is None or y is None:
+            # Deduplication check: return existing element if same hint is already present
+            for e in self.memory.elements.values():
+                if e.type == "hint" and e.content == text:
+                    return {
+                        "success": True,
+                        "id": e.id,
+                        "action": "create_hint",
+                        "bounds": e.bounds.to_dict(),
+                        "message": f"Existing hint '{e.id}' reused",
+                        "deduplicated": True,
+                    }
             box = self.memory.find_empty_space(width, height, anchor_id=anchor_id, direction=direction)
         else:
             box = BoundingBox(x=x, y=y, width=width, height=height)
@@ -250,6 +294,17 @@ class WhiteboardToolRegistry:
                 calc_h = max(220.0, min(650.0, 100.0 + line_count * 45.0))
 
         if x is None or y is None:
+            # Deduplication check: return existing element if same diagram code or title exists
+            for e in self.memory.elements.values():
+                if e.type == "mermaid" and isinstance(e.content, dict) and (e.content.get("code") == clean_code or (title and e.title == title)):
+                    return {
+                        "success": True,
+                        "id": e.id,
+                        "action": "create_mermaid",
+                        "bounds": e.bounds.to_dict(),
+                        "message": f"Existing Mermaid diagram '{e.id}' reused",
+                        "deduplicated": True,
+                    }
             box = self.memory.find_empty_space(calc_w, calc_h, anchor_id=anchor_id, direction=direction)
         else:
             box = BoundingBox(x=x, y=y, width=calc_w, height=calc_h)
@@ -290,6 +345,17 @@ class WhiteboardToolRegistry:
     ) -> Dict[str, Any]:
         """Plots a mathematical function curve or data chart with axes."""
         if x is None or y is None:
+            # Deduplication check: return existing element if same hint is already present
+            for e in self.memory.elements.values():
+                if e.type == "hint" and e.content == text:
+                    return {
+                        "success": True,
+                        "id": e.id,
+                        "action": "create_hint",
+                        "bounds": e.bounds.to_dict(),
+                        "message": f"Existing hint '{e.id}' reused",
+                        "deduplicated": True,
+                    }
             box = self.memory.find_empty_space(width, height, anchor_id=anchor_id, direction=direction)
         else:
             box = BoundingBox(x=x, y=y, width=width, height=height)
@@ -328,6 +394,17 @@ class WhiteboardToolRegistry:
     ) -> Dict[str, Any]:
         """Creates a callout hint / tip card."""
         if x is None or y is None:
+            # Deduplication check: return existing element if same hint is already present
+            for e in self.memory.elements.values():
+                if e.type == "hint" and e.content == text:
+                    return {
+                        "success": True,
+                        "id": e.id,
+                        "action": "create_hint",
+                        "bounds": e.bounds.to_dict(),
+                        "message": f"Existing hint '{e.id}' reused",
+                        "deduplicated": True,
+                    }
             box = self.memory.find_empty_space(width, height, anchor_id=anchor_id, direction=direction)
         else:
             box = BoundingBox(x=x, y=y, width=width, height=height)
@@ -360,6 +437,21 @@ class WhiteboardToolRegistry:
         style: Literal["straight", "wavy", "handdrawn"] = "handdrawn",
     ) -> Dict[str, Any]:
         """Draws an underline beneath a specific element, or beneath an exact word/formula term inside it."""
+        # Deduplication: reuse existing underline on same target
+        for e in self.memory.elements.values():
+            if e.type == "stroke" and e.target_id == target_id and e.target_text == target_text and isinstance(e.content, dict) and e.content.get("stroke_type") == "underline":
+                return {
+                    "success": True,
+                    "id": e.id,
+                    "target_id": target_id,
+                    "target_text": target_text,
+                    "action": "underline_element",
+                    "svg_path": e.content.get("svg_path"),
+                    "bounds": e.bounds.to_dict(),
+                    "message": f"Existing underline '{e.id}' reused",
+                    "deduplicated": True,
+                }
+
         target = self.memory.get_element(target_id)
 
         target_box = target.bounds
@@ -412,6 +504,21 @@ class WhiteboardToolRegistry:
         style: Literal["smooth", "handdrawn"] = "handdrawn",
     ) -> Dict[str, Any]:
         """Draws an organic highlighter circle around an element, or around an exact word/formula term inside it."""
+        # Deduplication: reuse existing circle on same target
+        for e in self.memory.elements.values():
+            if e.type == "stroke" and e.target_id == target_id and e.target_text == target_text and isinstance(e.content, dict) and e.content.get("stroke_type") == "circle":
+                return {
+                    "success": True,
+                    "id": e.id,
+                    "target_id": target_id,
+                    "target_text": target_text,
+                    "action": "circle_element",
+                    "svg_path": e.content.get("svg_path"),
+                    "bounds": e.bounds.to_dict(),
+                    "message": f"Existing circle '{e.id}' reused",
+                    "deduplicated": True,
+                }
+
         target = self.memory.get_element(target_id)
 
         target_box = target.bounds
