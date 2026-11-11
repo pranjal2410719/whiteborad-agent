@@ -121,10 +121,20 @@ class WhiteboardToolRegistry:
         height: float = 130.0,
     ) -> Dict[str, Any]:
         """Creates a mathematical formula or equation card with optional step-by-step resolution."""
+        # Calculate spacious width so formula stays strictly on ONE line without congestion
+        calc_width = width
+        if calc_width == 260.0:
+            calc_width = max(380.0, len(formula) * 22.0 + 90.0)
+
+        calc_height = height
+        if calc_height == 130.0:
+            step_count = len(steps) if steps else 0
+            calc_height = 85.0 + (step_count * 35.0) if step_count > 0 else 85.0
+
         if x is None or y is None:
-            box = self.memory.find_empty_space(width, height, anchor_id=anchor_id, direction=direction)
+            box = self.memory.find_empty_space(calc_width, calc_height, anchor_id=anchor_id, direction=direction)
         else:
-            box = BoundingBox(x=x, y=y, width=width, height=height)
+            box = BoundingBox(x=x, y=y, width=calc_width, height=calc_height)
 
         elem_id = f"eq-{uuid.uuid4().hex[:6]}"
         elem = WhiteboardElement(

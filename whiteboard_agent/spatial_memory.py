@@ -13,7 +13,7 @@ class SpatialMemory:
 
     def __init__(self, initial_state: Optional[CanvasState] = None):
         self.state = initial_state or CanvasState()
-        self.default_margin: float = 24.0
+        self.default_margin: float = 65.0
 
     @property
     def elements(self) -> Dict[str, WhiteboardElement]:
@@ -106,7 +106,7 @@ class SpatialMemory:
     def check_collision(
         self,
         candidate_box: BoundingBox,
-        margin: float = 20.0,
+        margin: float = 45.0,
         exclude_id: Optional[str] = None,
         ignore_strokes: bool = True,
     ) -> List[str]:
