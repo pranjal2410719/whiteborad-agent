@@ -143,7 +143,7 @@ class WhiteboardToolRegistry:
             bounds=box,
             title=title,
             content={"formula": formula, "steps": steps or []},
-            style={"border": "1px solid #4f46e5", "background": "#f8fafc"},
+            style={"color": "#1e293b"},
         )
         self.memory.add_element(elem)
         return {
@@ -339,7 +339,7 @@ class WhiteboardToolRegistry:
             bounds=box,
             title="💡 Hint",
             content=text,
-            style={"background": "#eff6ff", "border": "1px dashed #3b82f6"},
+            style={"color": "#b45309"},
         )
         self.memory.add_element(elem)
         return {
