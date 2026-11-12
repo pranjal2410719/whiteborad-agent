@@ -41,7 +41,7 @@
 +-------------------------------------------------------------+
 ```
 
-### The 3 Core Rules for the Agent
+### The 5 Core Rules for the Agent
 
 1. **Never Guess Coordinates Blindly**:
    - The whiteboard has an intelligent `SpatialMemory` engine.
@@ -50,8 +50,14 @@
 2. **Always Reference Target IDs for Visual Accents**:
    - Do **not** calculate pixel coordinates to underline or circle an element.
    - Simply pass `target_id="el-123"` to `underline_element` or `circle_element`. The agent engine calculates exact SVG paths, bounding boxes, and offsets dynamically.
-3. **Keep the Learner Focused**:
-   - Whenever you finish placing content or move to a new topic, call `drag_canvas(focus_element_id="el-123")` or specify `(x, y, zoom)` to pan the student's camera viewport to the active element.
+3. **Zero Overlaps & Dynamic Sizing**:
+   - `SpatialMemory` enforces an 85px separation margin between all independent concepts.
+   - Text, sticky notes, formulas, hints, and Mermaid diagrams automatically compute generous bounds matching real rendered DOM typography, guaranteeing that subsequent elements placed below or to the side never overlap.
+   - Even if explicit `(x, y)` coordinates are supplied, the engine checks for collisions with 65px margin and shifts conflicting boxes to clear coordinates.
+4. **Parameter Resiliency & Aliases**:
+   - Tools accept `**kwargs` and handle parameter aliases seamlessly (`content` or `text`, `annotation_text` or `text`, `direction` or `position`, `formula` or `equation`), preventing runtime argument errors.
+5. **Strict Zero-Emoji Policy**:
+   - Maintain professional STEM pedagogical cleanliness: strictly avoid emojis across all whiteboard content, notes, titles, and agent responses. Use clean mathematical Unicode ($\Delta, \pi, \pm, \sqrt{}$) or LaTeX expressions.
 
 ---
 

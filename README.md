@@ -9,21 +9,23 @@ A dedicated AI Agent and Spatial Memory Engine designed to autonomously operate 
 
 ## Core Highlights
 
-1. **Spatial Memory Engine**:
+1. **Spatial Memory & Zero-Overlap Guarantee Engine**:
    - Tracks 2D bounding boxes `(x, y, width, height)` of every element on the canvas.
-   - Intelligent collision-free empty space finder using directional placement (`right`, `bottom`, `left`, `top`) and Archimedean spiral raycasting.
+   - Dynamic size calculation: character-aware multi-line width and height calculation for text, sticky notes, formulas, hints, and Mermaid diagrams prevents undersized bounding boxes.
+   - Guaranteed collision-free empty space finder using directional placement (`right`, `bottom`, `left`, `top`) with generous 85px separation margin, multi-tier slot alignment, and Archimedean spiral raycasting.
+   - Collision checks run even when explicit `(x, y)` coordinates are supplied, automatically relocating colliding inputs to nearby clear space.
    - Generates compact spatial context digests injected directly into LLM prompts so thinking models have spatial awareness.
 
 2. **Accurate Target Geometry Operations**:
-   - `underline_element(target_id)`: Generates precise SVG paths positioned right beneath the target text/card with organic hand-drawn styling.
-   - `circle_element(target_id)`: Calculates bounding oval coordinates with padding to highlight elements.
+   - `underline_element(target_id)`: Generates precise SVG paths positioned right beneath the target text/card with organic hand-drawn styling and clean vertical offset.
+   - `circle_element(target_id)`: Calculates bounding oval coordinates with padding to highlight elements or specific sub-terms without clipping adjacent characters.
    - `draw_arrow(from_id, to_id)`: Dynamically computes closest exit and entry edge anchors with arrowhead geometry.
    - `annotate_element(target_id, text)`: Finds free space next to the target and attaches an annotation badge with a leader line.
 
 3. **MathCanvas Powered Visual Chain-of-Thought (VCoT)**:
    - Implements the intrinsic multimodal mathematical reasoning paradigm from **MathCanvas (ACL 2026, CUHK MMLab & Huawei Research)**.
-   - `construct_geometry`: Foundational geometric structures based on AlphaGeometry (triangles, circles, polygons, coordinate axes).
-   - `add_auxiliary_line`: Dynamic visual editing (altitudes with right-angle squares, medians with congruence ticks, angle bisectors, tangents).
+   - `construct_geometry`: Foundational geometric structures based on AlphaGeometry (triangles, right triangles, rectangles, circles, coordinate axes).
+   - `add_auxiliary_line`: Dynamic visual editing (altitudes with right-angle squares, medians with congruence ticks, angle bisectors, perpendiculars, tangents).
    - `mark_geometry`: Right-angle squares ($\llcorner$), congruent segment ticks ($\parallel$), and angle arcs.
    - `execute_vcot_step`: Interleaves textual deductive reasoning with real-time visual diagram modifications.
 
@@ -34,9 +36,9 @@ A dedicated AI Agent and Spatial Memory Engine designed to autonomously operate 
    - Sub-element targeting: Call `circle_element` or `underline_element` on individual node labels or words inside Mermaid diagrams.
 
 5. **Complete Whiteboard Tool Suite**:
-   - `write_text`: Text blocks and titles.
-   - `create_sticky_note`: Sticky notes with themes.
-   - `create_formula`: Formulas and equations with sub-word/term targeting.
+   - `write_text`: Text blocks and titles with dynamic word-wrap bounds.
+   - `create_sticky_note`: Sticky notes with themes and generous multi-line heights.
+   - `create_formula`: Single-line formulas and equations with sub-word/term targeting.
    - `create_mermaid` & `create_diagram`: Mermaid charts and process trees.
    - `create_graph`: Function curves ($y = ax^2 + bx + c$), axes, plots.
    - `create_hint`: Callout hint cards.
@@ -45,7 +47,10 @@ A dedicated AI Agent and Spatial Memory Engine designed to autonomously operate 
    - `move_element`, `delete_element`, `clear_canvas`.
    - `find_empty_space`, `get_canvas_state`.
 
-6. **Universal LLM & Frontend Interoperability**:
+6. **Robust Parameter Tolerance & Universal LLM Interoperability**:
+   - Resilient parameter adaptation: all tools accept `**kwargs` and seamlessly map LLM aliases (`text` <-> `content`, `annotation_text` <-> `text`, `direction` <-> `position`, `equation` <-> `formula`, etc.), eliminating tool execution runtime exceptions.
+   - Strict zero-emoji policy: clean, distraction-free pedagogical presentation.
+   - Compatible with **Pipecat AI** voice pipelines (TTS/STT) for synchronized audio micro-lectures.
    - Exports standard tool schemas:
      - **OpenAI Function Calling** (`tools: [{type: "function", ...}]`)
      - **Anthropic Claude Tool Use** (`tools: [{name: ..., input_schema: ...}]`)
@@ -79,7 +84,7 @@ whiteboard_agent/
 │   ├── demo_anthropic.py       # Anthropic Claude tool use example
 │   ├── demo_gemini.py          # Google Gemini function declarations example
 │   └── demo_local_ollama.py    # Local LLMs via Ollama example
-└── tests/                      # Pytest suite (13 passing tests)
+└── tests/                      # Pytest suite (23 passing tests)
 ```
 
 ---
@@ -225,4 +230,4 @@ Run the test suite:
 ```bash
 pytest
 ```
-All 13 test suites verify spatial memory bounds, collision avoidance, geometry path generation, tool registry execution, and schema formats.
+All 23 test suites verify spatial memory bounds, collision avoidance, geometry path generation, tool registry execution, MathCanvas VCoT, and schema formats.
