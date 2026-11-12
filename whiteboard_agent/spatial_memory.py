@@ -49,29 +49,38 @@ class SpatialMemory:
     def _sync_dependents(self, parent_id: str, dx: float, dy: float) -> None:
         """Propagates movement to all dependent annotations, underlines, circles, and arrows."""
         from .geometry import (
+            calculate_sub_text_bounds,
             create_arrow_path,
             create_circle_path,
             create_underline_path,
         )
 
+        parent = self.state.elements.get(parent_id)
+
         for el in list(self.state.elements.values()):
             if el.target_id == parent_id or (isinstance(el.content, dict) and el.content.get("geometry_id") == parent_id):
-                el.bounds = BoundingBox(
-                    x=el.bounds.x + dx,
-                    y=el.bounds.y + dy,
-                    width=el.bounds.width,
-                    height=el.bounds.height,
-                )
-                if isinstance(el.content, dict):
+                if isinstance(el.content, dict) and parent and el.target_id == parent_id:
                     st = el.content.get("stroke_type")
-                    if st == "underline":
-                        udata = create_underline_path(el.bounds, style=el.content.get("style", "handdrawn"))
-                        el.content["svg_path"] = udata["svg_path"]
-                        el.content["points"] = udata["points"]
-                    elif st == "circle":
-                        cdata = create_circle_path(el.bounds, padding=el.content.get("padding", 8.0), style=el.content.get("style", "handdrawn"))
-                        el.content["svg_path"] = cdata["svg_path"]
-                        el.content["center"] = cdata["center"]
+                    if st in ("underline", "circle"):
+                        target_box = parent.bounds
+                        if el.target_text:
+                            if isinstance(parent.content, dict):
+                                full_text = parent.content.get("code") or parent.content.get("mermaid_code") or parent.content.get("formula", "") or str(parent.content)
+                            else:
+                                full_text = str(parent.content or parent.title or "")
+                            font_size = 36.0 if parent.type == "formula" else 20.0 if parent.type == "mermaid" else 24.0
+                            target_box = calculate_sub_text_bounds(parent.bounds, full_text, el.target_text, font_size=font_size)
+
+                        if st == "underline":
+                            udata = create_underline_path(target_box, style=el.content.get("style", "handdrawn"))
+                            el.content["svg_path"] = udata["svg_path"]
+                            el.content["points"] = udata["points"]
+                            el.bounds = BoundingBox(**udata["bounds"])
+                        elif st == "circle":
+                            cdata = create_circle_path(target_box, padding=el.content.get("padding", 8.0), style=el.content.get("style", "handdrawn"))
+                            el.content["svg_path"] = cdata["svg_path"]
+                            el.content["center"] = cdata["center"]
+                            el.bounds = BoundingBox(**cdata["bounds"])
                     elif st == "arrow":
                         src_id = el.content.get("from_id")
                         dst_id = el.content.get("to_id")
@@ -79,6 +88,20 @@ class SpatialMemory:
                             adata = create_arrow_path(self.state.elements[src_id].bounds, self.state.elements[dst_id].bounds)
                             el.content["svg_path"] = adata["svg_path"]
                             el.bounds = BoundingBox(**adata["bounds"])
+                    else:
+                        el.bounds = BoundingBox(
+                            x=el.bounds.x + dx,
+                            y=el.bounds.y + dy,
+                            width=el.bounds.width,
+                            height=el.bounds.height,
+                        )
+                else:
+                    el.bounds = BoundingBox(
+                        x=el.bounds.x + dx,
+                        y=el.bounds.y + dy,
+                        width=el.bounds.width,
+                        height=el.bounds.height,
+                    )
 
     def remove_element(self, element_id: str) -> Optional[WhiteboardElement]:
         """Removes an element from memory."""

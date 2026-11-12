@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import math
 import uuid
-from typing import Any, Dict, List, Literal, Optional, Tuple
+from typing import Any, Dict, List, Literal, Optional, Tuple, Union
 
 from .models import BoundingBox, WhiteboardElement
 
@@ -140,10 +140,15 @@ class MathCanvasToolExtension:
         y: Optional[float] = None,
         width: float = 280.0,
         height: float = 220.0,
+        **kwargs: Any,
     ) -> Dict[str, Any]:
         """Constructs foundational geometric figures with exact points, sides, and vertex labels."""
         params = parameters or {}
         elem_id = f"geom-{uuid.uuid4().hex[:6]}"
+
+        vertices = kwargs.get("vertices")
+        if not points and isinstance(vertices, dict):
+            points = vertices
 
         if x is None or y is None:
             box = self.memory.find_empty_space(width, height, anchor_id=anchor_id, direction=direction)
@@ -163,9 +168,10 @@ class MathCanvasToolExtension:
                 for name, pt in points.items():
                     computed_points[name] = (cx + pt[0], cy + pt[1])
             else:
-                computed_points["A"] = (cx, cy - (height * 0.4))
-                computed_points["B"] = (cx - (width * 0.38), cy + (height * 0.38))
-                computed_points["C"] = (cx + (width * 0.38), cy + (height * 0.38))
+                v_names = list(vertices) if (vertices and isinstance(vertices, (list, tuple)) and len(vertices) >= 3) else ["A", "B", "C"]
+                computed_points[v_names[0]] = (cx, cy - (height * 0.4))
+                computed_points[v_names[1]] = (cx - (width * 0.38), cy + (height * 0.38))
+                computed_points[v_names[2]] = (cx + (width * 0.38), cy + (height * 0.38))
 
             pts_list = list(computed_points.values())
             path_d = f"M {pts_list[0][0]:.1f} {pts_list[0][1]:.1f} L {pts_list[1][0]:.1f} {pts_list[1][1]:.1f} L {pts_list[2][0]:.1f} {pts_list[2][1]:.1f} Z"
@@ -177,6 +183,50 @@ class MathCanvasToolExtension:
             for name, (px, py) in computed_points.items():
                 svg_elements.append(f'<circle cx="{px:.1f}" cy="{py:.1f}" r="3.5" fill="{stroke_color}"/>')
                 # Place label offset away from center
+                lx = px + (12 if px >= cx else -18)
+                ly = py + (16 if py >= cy else -10)
+                svg_elements.append(f'<text x="{lx:.1f}" y="{ly:.1f}" font-family="Caveat, cursive" font-size="22" font-weight="bold" fill="{stroke_color}">{name}</text>')
+
+        elif figure_type == "right_triangle":
+            if points and len(points) >= 3:
+                for name, pt in points.items():
+                    computed_points[name] = (cx + pt[0], cy + pt[1])
+            else:
+                v_names = list(vertices) if (vertices and isinstance(vertices, (list, tuple)) and len(vertices) >= 3) else ["A", "B", "C"]
+                computed_points[v_names[0]] = (cx - (width * 0.38), cy - (height * 0.4))
+                computed_points[v_names[1]] = (cx + (width * 0.38), cy + (height * 0.38))
+                computed_points[v_names[2]] = (cx - (width * 0.38), cy + (height * 0.38))
+
+            pts_list = [computed_points[k] for k in (v_names if not points else list(computed_points.keys()))[:3]]
+            path_d = f"M {pts_list[0][0]:.1f} {pts_list[0][1]:.1f} L {pts_list[1][0]:.1f} {pts_list[1][1]:.1f} L {pts_list[2][0]:.1f} {pts_list[2][1]:.1f} Z"
+            svg_elements.append(
+                f'<path d="{path_d}" fill="none" stroke="{stroke_color}" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>'
+            )
+            for name, (px, py) in computed_points.items():
+                svg_elements.append(f'<circle cx="{px:.1f}" cy="{py:.1f}" r="3.5" fill="{stroke_color}"/>')
+                lx = px + (12 if px >= cx else -18)
+                ly = py + (16 if py >= cy else -10)
+                svg_elements.append(f'<text x="{lx:.1f}" y="{ly:.1f}" font-family="Caveat, cursive" font-size="22" font-weight="bold" fill="{stroke_color}">{name}</text>')
+
+        elif figure_type == "rectangle":
+            if points and len(points) >= 4:
+                for name, pt in points.items():
+                    computed_points[name] = (cx + pt[0], cy + pt[1])
+            else:
+                v_names = list(vertices) if (vertices and isinstance(vertices, (list, tuple)) and len(vertices) >= 4) else ["A", "B", "C", "D"]
+                w_half, h_half = width * 0.38, height * 0.38
+                computed_points[v_names[0]] = (cx - w_half, cy - h_half)
+                computed_points[v_names[1]] = (cx + w_half, cy - h_half)
+                computed_points[v_names[2]] = (cx + w_half, cy + h_half)
+                computed_points[v_names[3]] = (cx - w_half, cy + h_half)
+
+            pts_list = [computed_points[k] for k in (v_names if not points else list(computed_points.keys()))[:4]]
+            path_d = f"M {pts_list[0][0]:.1f} {pts_list[0][1]:.1f} L {pts_list[1][0]:.1f} {pts_list[1][1]:.1f} L {pts_list[2][0]:.1f} {pts_list[2][1]:.1f} L {pts_list[3][0]:.1f} {pts_list[3][1]:.1f} Z"
+            svg_elements.append(
+                f'<path d="{path_d}" fill="none" stroke="{stroke_color}" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>'
+            )
+            for name, (px, py) in computed_points.items():
+                svg_elements.append(f'<circle cx="{px:.1f}" cy="{py:.1f}" r="3.5" fill="{stroke_color}"/>')
                 lx = px + (12 if px >= cx else -18)
                 ly = py + (16 if py >= cy else -10)
                 svg_elements.append(f'<text x="{lx:.1f}" y="{ly:.1f}" font-family="Caveat, cursive" font-size="22" font-weight="bold" fill="{stroke_color}">{name}</text>')
@@ -233,13 +283,14 @@ class MathCanvasToolExtension:
     def add_auxiliary_line(
         self,
         geometry_id: str,
-        line_type: Literal["altitude", "median", "angle_bisector", "tangent", "segment", "perpendicular"],
+        line_type: Literal["altitude", "median", "angle_bisector", "tangent", "segment", "perpendicular"] = "altitude",
         from_point: Optional[str] = None,
         to_point: Optional[str] = None,
-        base_points: Optional[Tuple[str, str]] = None,
+        base_points: Optional[Union[Tuple[str, str], List[str]]] = None,
         label: str = "H",
         color: str = "#dc2626",
         style: Literal["dashed", "solid"] = "dashed",
+        **kwargs: Any,
     ) -> Dict[str, Any]:
         """Adds a strategic auxiliary construction line to an existing geometric figure.
 
@@ -249,6 +300,15 @@ class MathCanvasToolExtension:
         - Angle Bisector: bisects angle at vertex and draws arc markings.
         - Tangent: draws tangent line to circle.
         """
+        if from_point is None and "from_vertex" in kwargs:
+            from_point = kwargs["from_vertex"]
+        if base_points is None and "to_segment" in kwargs:
+            base_points = tuple(kwargs["to_segment"])
+        elif isinstance(base_points, list):
+            base_points = tuple(base_points)
+        if to_point is None and "to_vertex" in kwargs:
+            to_point = kwargs["to_vertex"]
+
         geom = self.memory.get_element(geometry_id)
         pts = geom.content.get("points", {})
 
@@ -256,11 +316,11 @@ class MathCanvasToolExtension:
         p2: Tuple[float, float]
         aux_marks: List[str] = []
 
-        if line_type == "altitude":
+        if line_type == "altitude" or (line_type == "perpendicular" and base_points):
             v_name = from_point or "A"
             b1_name, b2_name = base_points or ("B", "C")
             if v_name not in pts or b1_name not in pts or b2_name not in pts:
-                raise ValueError(f"Points for altitude ({v_name}, {b1_name}, {b2_name}) not found in {list(pts.keys())}")
+                raise ValueError(f"Points for {line_type} ({v_name}, {b1_name}, {b2_name}) not found in {list(pts.keys())}")
             va = tuple(pts[v_name])
             vb1 = tuple(pts[b1_name])
             vb2 = tuple(pts[b2_name])
@@ -349,14 +409,29 @@ class MathCanvasToolExtension:
         geometry_id: str,
         mark_type: Literal["right_angle", "congruent_ticks", "angle_arc"],
         vertex: Optional[str] = None,
-        arms: Optional[Tuple[str, str]] = None,
-        segment: Optional[Tuple[str, str]] = None,
+        arms: Optional[Union[Tuple[str, str], List[str]]] = None,
+        segment: Optional[Union[Tuple[str, str], List[str]]] = None,
         ticks: int = 1,
         color: str = "#dc2626",
+        **kwargs: Any,
     ) -> Dict[str, Any]:
         """Draws right angle squares, angle arcs, or congruence ticks onto geometric elements."""
+        if arms is None and "arms" in kwargs:
+            arms = tuple(kwargs["arms"])
+        elif isinstance(arms, list):
+            arms = tuple(arms)
+        if segment is None and "segment" in kwargs:
+            segment = tuple(kwargs["segment"])
+        elif isinstance(segment, list):
+            segment = tuple(segment)
+
         geom = self.memory.get_element(geometry_id)
         pts = geom.content.get("points", {})
+
+        if mark_type in ("right_angle", "angle_arc") and vertex and not arms:
+            other_pts = [p for p in pts.keys() if p != vertex]
+            if len(other_pts) >= 2:
+                arms = (other_pts[0], other_pts[1])
 
         svg_path = ""
         if mark_type == "right_angle" and vertex and arms:

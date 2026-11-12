@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -34,20 +35,41 @@ def create_whiteboard_app(agent: Optional[WhiteboardAgent] = None) -> FastAPI:
 
     # Active websocket connections
     active_connections: List[WebSocket] = []
+    main_loop: Optional[asyncio.AbstractEventLoop] = None
+
+    @app.on_event("startup")
+    async def on_startup():
+        nonlocal main_loop
+        main_loop = asyncio.get_running_loop()
+
+    async def _safe_send_ws(ws: WebSocket, text: str):
+        try:
+            await ws.send_text(text)
+        except Exception:
+            if ws in active_connections:
+                try:
+                    active_connections.remove(ws)
+                except ValueError:
+                    pass
 
     # Wire agent listener to broadcast to connected clients
     def on_agent_event(event: Dict[str, Any]):
+        nonlocal main_loop
         msg = json.dumps(event)
-        # Note: In async loop, send to active websockets
-        import asyncio
         loop = None
         try:
             loop = asyncio.get_running_loop()
         except RuntimeError:
             pass
-        if loop and loop.is_running():
-            for ws in active_connections:
-                loop.create_task(ws.send_text(msg))
+        if loop and not main_loop:
+            main_loop = loop
+        target_loop = loop or main_loop
+        if target_loop and target_loop.is_running():
+            for ws in list(active_connections):
+                if loop == target_loop:
+                    target_loop.create_task(_safe_send_ws(ws, msg))
+                else:
+                    asyncio.run_coroutine_threadsafe(_safe_send_ws(ws, msg), target_loop)
 
     agent.add_listener(on_agent_event)
 
@@ -76,7 +98,7 @@ def create_whiteboard_app(agent: Optional[WhiteboardAgent] = None) -> FastAPI:
         }
 
     @app.post("/api/tools/execute")
-    def execute_tool(req: ToolExecutionRequest):
+    async def execute_tool(req: ToolExecutionRequest):
         res = agent.execute_tool(req.tool, req.arguments)
         return res
 

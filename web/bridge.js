@@ -244,6 +244,22 @@ class WhiteboardBridge {
 
   renderStroke(el) {
     if (!this.svgInkEl) return;
+    const existing = document.getElementById(el.id);
+    if (existing) {
+      if (el.content?.svg_fragment) {
+        existing.innerHTML = el.content.svg_fragment;
+      } else if (el.content?.svg_path) {
+        if (existing.tagName.toLowerCase() === 'path') {
+          existing.setAttribute('d', el.content.svg_path);
+        } else {
+          const pathEl = existing.querySelector('path');
+          if (pathEl) {
+            pathEl.setAttribute('d', el.content.svg_path);
+          }
+        }
+      }
+      return;
+    }
     if (el.content?.svg_fragment) {
       const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
       g.setAttribute('id', el.id);

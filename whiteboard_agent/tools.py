@@ -217,15 +217,22 @@ class WhiteboardToolRegistry:
 
         nodes = nodes or []
         if x is None or y is None:
-            # Deduplication check: return existing element if same hint is already present
+            # Deduplication check: return existing element if same diagram is already present
             for e in self.memory.elements.values():
-                if e.type == "hint" and e.content == text:
+                if (
+                    e.type == "diagram"
+                    and isinstance(e.content, dict)
+                    and e.content.get("type") == diagram_type
+                    and e.content.get("nodes") == nodes
+                    and e.content.get("connections") == (connections or [])
+                    and (not title or e.title == title)
+                ):
                     return {
                         "success": True,
                         "id": e.id,
-                        "action": "create_hint",
+                        "action": "create_diagram",
                         "bounds": e.bounds.to_dict(),
-                        "message": f"Existing hint '{e.id}' reused",
+                        "message": f"Existing diagram '{e.id}' reused",
                         "deduplicated": True,
                     }
             box = self.memory.find_empty_space(width, height, anchor_id=anchor_id, direction=direction)
@@ -345,15 +352,22 @@ class WhiteboardToolRegistry:
     ) -> Dict[str, Any]:
         """Plots a mathematical function curve or data chart with axes."""
         if x is None or y is None:
-            # Deduplication check: return existing element if same hint is already present
+            # Deduplication check: return existing element if same graph is already present
             for e in self.memory.elements.values():
-                if e.type == "hint" and e.content == text:
+                if (
+                    e.type == "graph"
+                    and isinstance(e.content, dict)
+                    and e.content.get("graph_type") == graph_type
+                    and e.content.get("equation") == equation
+                    and e.content.get("data") == (data or {})
+                    and (not title or e.title == title)
+                ):
                     return {
                         "success": True,
                         "id": e.id,
-                        "action": "create_hint",
+                        "action": "create_graph",
                         "bounds": e.bounds.to_dict(),
-                        "message": f"Existing hint '{e.id}' reused",
+                        "message": f"Existing graph '{e.id}' reused",
                         "deduplicated": True,
                     }
             box = self.memory.find_empty_space(width, height, anchor_id=anchor_id, direction=direction)
@@ -778,6 +792,7 @@ class WhiteboardToolRegistry:
         y: Optional[float] = None,
         width: float = 280.0,
         height: float = 220.0,
+        **kwargs: Any,
     ) -> Dict[str, Any]:
         """Constructs geometric figures with vertices, sides, and point labels directly in marker ink."""
         return self.mathcanvas.construct_geometry(
@@ -792,19 +807,21 @@ class WhiteboardToolRegistry:
             y=y,
             width=width,
             height=height,
+            **kwargs,
         )
 
     # --- MathCanvas Tool 18: Add Auxiliary Line (MathCanvas-Edit) ---
     def add_auxiliary_line(
         self,
         geometry_id: str,
-        line_type: Literal["altitude", "median", "angle_bisector", "tangent", "segment", "perpendicular"],
+        line_type: Literal["altitude", "median", "angle_bisector", "tangent", "segment", "perpendicular"] = "altitude",
         from_point: Optional[str] = None,
         to_point: Optional[str] = None,
         base_points: Optional[Tuple[str, str]] = None,
         label: str = "H",
         color: str = "#dc2626",
         style: Literal["dashed", "solid"] = "dashed",
+        **kwargs: Any,
     ) -> Dict[str, Any]:
         """Adds a strategic auxiliary construction line (altitude, median, tangent, angle bisector) to a geometry figure."""
         return self.mathcanvas.add_auxiliary_line(
@@ -816,6 +833,7 @@ class WhiteboardToolRegistry:
             label=label,
             color=color,
             style=style,
+            **kwargs,
         )
 
     # --- MathCanvas Tool 19: Mark Geometry (Right Angle / Congruence / Arc) ---
@@ -828,6 +846,7 @@ class WhiteboardToolRegistry:
         segment: Optional[Tuple[str, str]] = None,
         ticks: int = 1,
         color: str = "#dc2626",
+        **kwargs: Any,
     ) -> Dict[str, Any]:
         """Marks right angles, congruence ticks, or angle arcs directly on a geometric drawing."""
         return self.mathcanvas.mark_geometry(
@@ -838,6 +857,7 @@ class WhiteboardToolRegistry:
             segment=segment,
             ticks=ticks,
             color=color,
+            **kwargs,
         )
 
     # --- MathCanvas Tool 20: Visual Chain-of-Thought (VCoT) Step ---
