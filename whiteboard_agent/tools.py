@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 import uuid
 from typing import Any, Dict, List, Literal, Optional, Tuple
 
@@ -36,8 +37,21 @@ class WhiteboardToolRegistry:
         y: Optional[float] = None,
         width: float = 240.0,
         height: float = 100.0,
+        **kwargs: Any,
     ) -> Dict[str, Any]:
         """Writes a block of text or markdown content on the canvas."""
+        text = kwargs.get("content") or kwargs.get("body") or text
+        title = kwargs.get("title") or title
+        direction = kwargs.get("direction") or direction
+
+        calc_width = width
+        if calc_width == 240.0:
+            calc_width = max(260.0, min(560.0, len(text) * 9.0 + 40.0))
+        calc_height = height
+        if calc_height == 100.0:
+            num_lines = max(1, math.ceil(len(text) / (calc_width / 14.0)))
+            calc_height = max(80.0, num_lines * 34.0 + (45.0 if title else 20.0))
+
         if x is None or y is None:
             # Deduplication check: return existing element if same text is already present
             for e in self.memory.elements.values():
@@ -50,9 +64,11 @@ class WhiteboardToolRegistry:
                         "message": f"Existing text block '{e.id}' reused",
                         "deduplicated": True,
                     }
-            box = self.memory.find_empty_space(width, height, anchor_id=anchor_id, direction=direction)
+            box = self.memory.find_empty_space(calc_width, calc_height, anchor_id=anchor_id, direction=direction)
         else:
-            box = BoundingBox(x=x, y=y, width=width, height=height)
+            box = BoundingBox(x=x, y=y, width=calc_width, height=calc_height)
+            if self.memory.check_collision(box, margin=35.0):
+                box = self.memory.find_empty_space(calc_width, calc_height, anchor_id=anchor_id, direction=direction)
 
         elem_id = f"txt-{uuid.uuid4().hex[:6]}"
         elem = WhiteboardElement(
@@ -75,7 +91,7 @@ class WhiteboardToolRegistry:
     # --- Tool 2: Create Sticky Note ---
     def create_sticky_note(
         self,
-        content: str,
+        content: str = "",
         title: Optional[str] = "Note",
         color: Literal["yellow", "green", "pink", "blue", "orange"] = "yellow",
         anchor_id: Optional[str] = None,
@@ -84,8 +100,13 @@ class WhiteboardToolRegistry:
         y: Optional[float] = None,
         width: float = 190.0,
         height: float = 140.0,
+        **kwargs: Any,
     ) -> Dict[str, Any]:
         """Creates a colored sticky note on the whiteboard."""
+        content = kwargs.get("text") or kwargs.get("body") or content
+        title = kwargs.get("title") or title
+        direction = kwargs.get("direction") or direction
+
         color_map = {
             "yellow": "#fef08a",
             "green": "#bbf7d0",
@@ -94,6 +115,14 @@ class WhiteboardToolRegistry:
             "orange": "#fed7aa",
         }
         bg = color_map.get(color, "#fef08a")
+
+        calc_width = width
+        if calc_width == 190.0:
+            calc_width = max(240.0, min(420.0, len(content) * 5.0 + 80.0))
+        calc_height = height
+        if calc_height == 140.0:
+            num_lines = max(1, math.ceil(len(content) / (calc_width / 11.0)))
+            calc_height = max(130.0, num_lines * 32.0 + (45.0 if title else 25.0))
 
         if x is None or y is None:
             # Deduplication check: return existing element if same note is already present
@@ -107,9 +136,11 @@ class WhiteboardToolRegistry:
                         "message": f"Existing sticky note '{e.id}' reused",
                         "deduplicated": True,
                     }
-            box = self.memory.find_empty_space(width, height, anchor_id=anchor_id, direction=direction)
+            box = self.memory.find_empty_space(calc_width, calc_height, anchor_id=anchor_id, direction=direction)
         else:
-            box = BoundingBox(x=x, y=y, width=width, height=height)
+            box = BoundingBox(x=x, y=y, width=calc_width, height=calc_height)
+            if self.memory.check_collision(box, margin=35.0):
+                box = self.memory.find_empty_space(calc_width, calc_height, anchor_id=anchor_id, direction=direction)
 
         elem_id = f"note-{uuid.uuid4().hex[:6]}"
         elem = WhiteboardElement(
@@ -132,7 +163,7 @@ class WhiteboardToolRegistry:
     # --- Tool 3: Create Formula ---
     def create_formula(
         self,
-        formula: str,
+        formula: str = "",
         title: Optional[str] = "Formula",
         steps: Optional[List[str]] = None,
         anchor_id: Optional[str] = None,
@@ -141,17 +172,22 @@ class WhiteboardToolRegistry:
         y: Optional[float] = None,
         width: float = 260.0,
         height: float = 130.0,
+        **kwargs: Any,
     ) -> Dict[str, Any]:
         """Creates a mathematical formula or equation card with optional step-by-step resolution."""
-        # Calculate spacious width so formula stays strictly on ONE line without congestion
+        formula = kwargs.get("equation") or kwargs.get("latex") or formula
+        steps = kwargs.get("steps") or steps
+        direction = kwargs.get("direction") or direction
+
+        # Calculate clean width so formula stays strictly on ONE line without excess whitespace
         calc_width = width
         if calc_width == 260.0:
-            calc_width = max(380.0, len(formula) * 22.0 + 90.0)
+            calc_width = max(340.0, min(750.0, len(formula) * 16.0 + 80.0))
 
         calc_height = height
         if calc_height == 130.0:
             step_count = len(steps) if steps else 0
-            calc_height = 85.0 + (step_count * 35.0) if step_count > 0 else 85.0
+            calc_height = 80.0 + (step_count * 34.0) if step_count > 0 else 80.0
 
         if x is None or y is None:
             # Deduplication check: return existing element if same formula is already present
@@ -168,6 +204,8 @@ class WhiteboardToolRegistry:
             box = self.memory.find_empty_space(calc_width, calc_height, anchor_id=anchor_id, direction=direction)
         else:
             box = BoundingBox(x=x, y=y, width=calc_width, height=calc_height)
+            if self.memory.check_collision(box, margin=35.0):
+                box = self.memory.find_empty_space(calc_width, calc_height, anchor_id=anchor_id, direction=direction)
 
         elem_id = f"eq-{uuid.uuid4().hex[:6]}"
         elem = WhiteboardElement(
@@ -271,9 +309,13 @@ class WhiteboardToolRegistry:
         y: Optional[float] = None,
         width: Optional[float] = None,
         height: Optional[float] = None,
+        **kwargs: Any,
     ) -> Dict[str, Any]:
         """Renders any Mermaid flowchart, diagram, or graph (flowchart, sequence, state, class, ER, gitGraph, mindmap)."""
-        clean_code = code.strip()
+        clean_code = (kwargs.get("mermaid_code") or code).strip()
+        title = kwargs.get("title") or title
+        direction = kwargs.get("direction") or direction
+
         lines = [l.strip() for l in clean_code.splitlines() if l.strip() and not l.strip().startswith("%%")]
         line_count = len(lines)
         first_line = lines[0].lower() if lines else ""
@@ -285,20 +327,20 @@ class WhiteboardToolRegistry:
         calc_h = height
         if calc_w is None:
             if is_horizontal:
-                calc_w = max(360.0, min(800.0, 200.0 + line_count * 55.0))
+                calc_w = max(420.0, min(850.0, 240.0 + line_count * 60.0))
             elif is_sequence:
-                calc_w = max(380.0, min(750.0, 220.0 + line_count * 40.0))
+                calc_w = max(400.0, min(800.0, 240.0 + line_count * 45.0))
             else:
                 max_line_len = max([len(l) for l in lines], default=20)
-                calc_w = max(320.0, min(650.0, 180.0 + max_line_len * 7.0))
+                calc_w = max(360.0, min(720.0, 200.0 + max_line_len * 8.0))
 
         if calc_h is None:
             if is_horizontal:
-                calc_h = max(220.0, min(500.0, 140.0 + line_count * 30.0))
+                calc_h = max(240.0, min(550.0, 160.0 + line_count * 35.0))
             elif is_sequence:
-                calc_h = max(260.0, min(700.0, 120.0 + line_count * 45.0))
+                calc_h = max(280.0, min(750.0, 140.0 + line_count * 50.0))
             else:
-                calc_h = max(220.0, min(650.0, 100.0 + line_count * 45.0))
+                calc_h = max(280.0, min(750.0, 140.0 + line_count * 55.0))
 
         if x is None or y is None:
             # Deduplication check: return existing element if same diagram code or title exists
@@ -315,6 +357,8 @@ class WhiteboardToolRegistry:
             box = self.memory.find_empty_space(calc_w, calc_h, anchor_id=anchor_id, direction=direction)
         else:
             box = BoundingBox(x=x, y=y, width=calc_w, height=calc_h)
+            if self.memory.check_collision(box, margin=35.0):
+                box = self.memory.find_empty_space(calc_w, calc_h, anchor_id=anchor_id, direction=direction)
 
         elem_id = f"mrmd-{uuid.uuid4().hex[:6]}"
         elem = WhiteboardElement(
@@ -347,10 +391,15 @@ class WhiteboardToolRegistry:
         direction: Literal["auto", "right", "bottom", "left", "top"] = "auto",
         x: Optional[float] = None,
         y: Optional[float] = None,
-        width: float = 270.0,
-        height: float = 170.0,
+        width: float = 280.0,
+        height: float = 180.0,
+        **kwargs: Any,
     ) -> Dict[str, Any]:
         """Plots a mathematical function curve or data chart with axes."""
+        equation = kwargs.get("equation") or equation or "y = x²"
+        title = kwargs.get("title") or title
+        direction = kwargs.get("direction") or direction
+
         if x is None or y is None:
             # Deduplication check: return existing element if same graph is already present
             for e in self.memory.elements.values():
@@ -373,6 +422,8 @@ class WhiteboardToolRegistry:
             box = self.memory.find_empty_space(width, height, anchor_id=anchor_id, direction=direction)
         else:
             box = BoundingBox(x=x, y=y, width=width, height=height)
+            if self.memory.check_collision(box, margin=35.0):
+                box = self.memory.find_empty_space(width, height, anchor_id=anchor_id, direction=direction)
 
         elem_id = f"plot-{uuid.uuid4().hex[:6]}"
         elem = WhiteboardElement(
@@ -398,15 +449,26 @@ class WhiteboardToolRegistry:
     # --- Tool 6: Create Hint ---
     def create_hint(
         self,
-        text: str,
+        text: str = "",
         anchor_id: Optional[str] = None,
         direction: Literal["auto", "right", "bottom", "left", "top"] = "auto",
         x: Optional[float] = None,
         y: Optional[float] = None,
-        width: float = 210.0,
+        width: float = 240.0,
         height: float = 90.0,
+        **kwargs: Any,
     ) -> Dict[str, Any]:
         """Creates a callout hint / tip card."""
+        text = kwargs.get("content") or kwargs.get("tip") or kwargs.get("body") or text
+        direction = kwargs.get("direction") or direction
+
+        calc_width = width
+        if calc_width == 240.0:
+            calc_width = max(260.0, min(500.0, len(text) * 8.0 + 60.0))
+        calc_height = height
+        if calc_height == 90.0:
+            calc_height = max(75.0, math.ceil(len(text) / (calc_width / 12.0)) * 32.0 + 20.0)
+
         if x is None or y is None:
             # Deduplication check: return existing element if same hint is already present
             for e in self.memory.elements.values():
@@ -419,9 +481,11 @@ class WhiteboardToolRegistry:
                         "message": f"Existing hint '{e.id}' reused",
                         "deduplicated": True,
                     }
-            box = self.memory.find_empty_space(width, height, anchor_id=anchor_id, direction=direction)
+            box = self.memory.find_empty_space(calc_width, calc_height, anchor_id=anchor_id, direction=direction)
         else:
-            box = BoundingBox(x=x, y=y, width=width, height=height)
+            box = BoundingBox(x=x, y=y, width=calc_width, height=calc_height)
+            if self.memory.check_collision(box, margin=35.0):
+                box = self.memory.find_empty_space(calc_width, calc_height, anchor_id=anchor_id, direction=direction)
 
         elem_id = f"hint-{uuid.uuid4().hex[:6]}"
         elem = WhiteboardElement(
@@ -623,14 +687,36 @@ class WhiteboardToolRegistry:
     # --- Tool 10: Annotate Element ---
     def annotate_element(
         self,
-        target_id: str,
-        text: str,
+        target_id: str = "",
+        text: str = "",
         position: Literal["auto", "right", "bottom", "left", "top"] = "auto",
         color: str = "#8b5cf6",
+        **kwargs: Any,
     ) -> Dict[str, Any]:
         """Places an annotation callout beside target element with a connecting line."""
-        target = self.memory.get_element(target_id)
-        callout_w, callout_h = 160.0, 70.0
+        text = kwargs.get("annotation_text") or kwargs.get("content") or text
+        position = kwargs.get("direction") or position
+        target_text = kwargs.get("target_text")
+
+        target = None
+        if target_id and target_id in self.memory.elements:
+            target = self.memory.get_element(target_id)
+        elif target_text:
+            matches = self.memory.find_elements_by_text(target_text)
+            if matches:
+                target = matches[0]
+                target_id = target.id
+        if not target:
+            # Fallback to the latest non-stroke element
+            non_strokes = [e for e in self.memory.elements.values() if e.type != "stroke"]
+            if non_strokes:
+                target = non_strokes[-1]
+                target_id = target.id
+            else:
+                target = self.memory.get_element(target_id)
+
+        callout_w = max(180.0, min(360.0, len(text) * 7.5 + 40.0))
+        callout_h = max(75.0, math.ceil(len(text) / 22.0) * 26.0 + 30.0)
         box = self.memory.find_empty_space(callout_w, callout_h, anchor_id=target_id, direction=position)
 
         annot_id = f"ann-{uuid.uuid4().hex[:6]}"

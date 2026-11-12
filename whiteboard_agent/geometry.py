@@ -10,7 +10,7 @@ from .models import BoundingBox
 
 def create_underline_path(
     box: BoundingBox,
-    offset_y: float = 6.0,
+    offset_y: float = 10.0,
     overflow_x: float = 8.0,
     style: Literal["straight", "wavy", "handdrawn"] = "handdrawn",
 ) -> Dict[str, Any]:
@@ -186,8 +186,8 @@ def calculate_sub_text_bounds(
     full_text: str,
     target_text: str,
     font_size: float = 24.0,
-    padding_x: float = 8.0,
-    padding_y: float = 8.0,
+    padding_x: float = 0.0,
+    padding_y: float = 0.0,
 ) -> BoundingBox:
     """Calculates the exact 2D bounding box of a specific word or mathematical symbol inside an element."""
     if not target_text or not full_text:

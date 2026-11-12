@@ -13,7 +13,7 @@ class SpatialMemory:
 
     def __init__(self, initial_state: Optional[CanvasState] = None):
         self.state = initial_state or CanvasState()
-        self.default_margin: float = 65.0
+        self.default_margin: float = 85.0
 
     @property
     def elements(self) -> Dict[str, WhiteboardElement]:
@@ -129,7 +129,7 @@ class SpatialMemory:
     def check_collision(
         self,
         candidate_box: BoundingBox,
-        margin: float = 45.0,
+        margin: float = 65.0,
         exclude_id: Optional[str] = None,
         ignore_strokes: bool = True,
     ) -> List[str]:
@@ -176,8 +176,12 @@ class SpatialMemory:
 
         anchor_box: Optional[BoundingBox] = None
         if anchor_id:
-            anchor_box = self.get_element(anchor_id).bounds
-        else:
+            try:
+                anchor_box = self.get_element(anchor_id).bounds
+            except ValueError:
+                anchor_box = None
+
+        if not anchor_box:
             # Default to the most recently added non-stroke element
             non_strokes = [e for e in self.state.elements.values() if e.type != "stroke"]
             if non_strokes:
@@ -187,24 +191,40 @@ class SpatialMemory:
         if anchor_box:
             candidate_positions: List[Tuple[float, float]] = []
             if direction == "right":
-                candidate_positions.append((anchor_box.right + gap, anchor_box.top))
+                candidate_positions.extend([
+                    (anchor_box.right + gap, anchor_box.top),
+                    (anchor_box.right + gap, anchor_box.center_y - height / 2.0),
+                    (anchor_box.right + gap, anchor_box.bottom - height),
+                ])
             elif direction == "bottom":
-                candidate_positions.append((anchor_box.left, anchor_box.bottom + gap))
+                candidate_positions.extend([
+                    (anchor_box.left, anchor_box.bottom + gap),
+                    (anchor_box.center_x - width / 2.0, anchor_box.bottom + gap),
+                    (anchor_box.right - width, anchor_box.bottom + gap),
+                ])
             elif direction == "left":
-                candidate_positions.append((anchor_box.left - width - gap, anchor_box.top))
+                candidate_positions.extend([
+                    (anchor_box.left - width - gap, anchor_box.top),
+                    (anchor_box.left - width - gap, anchor_box.center_y - height / 2.0),
+                ])
             elif direction == "top":
-                candidate_positions.append((anchor_box.left, anchor_box.top - height - gap))
+                candidate_positions.extend([
+                    (anchor_box.left, anchor_box.top - height - gap),
+                    (anchor_box.center_x - width / 2.0, anchor_box.top - height - gap),
+                ])
             elif direction == "auto":
                 # Try right first (natural reading/board order), then bottom, then left, then top
                 candidate_positions.extend([
                     (anchor_box.right + gap, anchor_box.top),
                     (anchor_box.left, anchor_box.bottom + gap),
+                    (anchor_box.right + gap, anchor_box.center_y - height / 2.0),
+                    (anchor_box.center_x - width / 2.0, anchor_box.bottom + gap),
                     (anchor_box.left - width - gap, anchor_box.top),
                     (anchor_box.left, anchor_box.top - height - gap),
                 ])
 
             for cx, cy in candidate_positions:
-                box = BoundingBox(x=cx, y=cy, width=width, height=height)
+                box = BoundingBox(x=round(cx, 1), y=round(cy, 1), width=width, height=height)
                 if not self.check_collision(box, margin=gap):
                     return box
 
@@ -216,21 +236,20 @@ class SpatialMemory:
             origin_x, origin_y = bounds.center if bounds else (0.0, 0.0)
 
         # Archimedean spiral search with step size adapted to element dimensions
-        step_radius = max(30.0, min(width, height) * 0.4)
-        for ring in range(1, 40):
+        step_radius = max(35.0, min(width, height) * 0.35)
+        for ring in range(1, 45):
             r = ring * step_radius
-            # Number of angular steps increases with radius for even coverage
-            steps = max(8, int(2 * math.pi * r / 50))
+            steps = max(10, int(2 * math.pi * r / 50))
             for i in range(steps):
                 angle = (2 * math.pi / steps) * i
-                # Slight horizontal bias (1.3x) because wide whiteboards flow left-to-right
-                cx = origin_x + math.cos(angle) * r * 1.3 - (width / 2.0)
+                # Horizontal bias (1.35x) because whiteboards flow left-to-right
+                cx = origin_x + math.cos(angle) * r * 1.35 - (width / 2.0)
                 cy = origin_y + math.sin(angle) * r - (height / 2.0)
                 box = BoundingBox(x=round(cx, 1), y=round(cy, 1), width=width, height=height)
                 if not self.check_collision(box, margin=gap):
                     return box
 
-        # Fallback: place far right of everything
+        # Fallback: place cleanly far right of everything with generous margin
         bounds = self.get_canvas_bounds()
         assert bounds is not None
         return BoundingBox(x=bounds.right + gap, y=bounds.top, width=width, height=height)
